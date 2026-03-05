@@ -587,4 +587,4 @@ R: Solo una vez. El constraint UNIQUE en BD lo previene.
 
 ---
 
-**Siguiente:** Continúa con [Part 4 - Batch Processing & Design Patterns](../refactored/README.md)
+**Siguiente:** Continúa con [Part 4 - Batch Processing & Scaling](../part4-batch/README.md)

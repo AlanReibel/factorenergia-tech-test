@@ -121,17 +121,13 @@ FE-PruebaTecnica/
 │   ├── Repository/
 │   └── Service/
 │
-├── refactored/                (Part 4: Batch & Design Patterns)
+├── part4-batch/                (Part 4: Batch Processing & Scaling)
 │   ├── README.md
 │   ├── Command/
-│   ├── Controller/
-│   ├── Entity/
-│   ├── Repository/
-│   ├── Service/
-│   ├── Exception/
-│   └── Tests/
+│   └── Service/
 │
-└── docs/                       (Documentación adicional)
+├── DOCUMENTATION_INDEX.md      (Navegación centralizada)
+└── docs/                       (Documentación histórica)
 ```
 
 ---

@@ -30,4 +30,26 @@ class InvoiceRepository
             'status' => $invoice->getStatus()
         ]);
     }
+
+    /**
+     * Check if an invoice already exists for a contract and billing period
+     * Used to prevent duplicate invoice generation
+     */
+    public function existsForPeriod(int $contractId, string $billingPeriod): bool
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT 1
+             FROM invoices
+             WHERE contract_id = :contract_id
+             AND billing_period = :billing_period
+             LIMIT 1"
+        );
+
+        $stmt->execute([
+            'contract_id' => $contractId,
+            'billing_period' => $billingPeriod
+        ]);
+
+        return $stmt->fetch() !== false;
+    }
 }

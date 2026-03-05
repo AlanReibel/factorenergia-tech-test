@@ -57,4 +57,23 @@ class ContractRepository
             (float) $row['estimated_annual_kwh']
         );
     }
+
+    /**
+     * Find all active contract IDs (batch processing)
+     * Returns only IDs to minimize memory usage for large datasets
+     */
+    public function findAllActiveContractIds(): array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT c.id
+             FROM contracts c
+             WHERE c.is_active = 1
+             ORDER BY c.id"
+        );
+
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_column($rows, 'id', null);
+    }
 }

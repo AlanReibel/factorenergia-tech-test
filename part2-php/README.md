@@ -571,3 +571,5 @@ class InvoiceServiceTest {
 ---
 
 **Siguiente:** Continúa con [Part 3 - API Integration](../part3-api/README.md)
+
+Después de Part 3, ve a [Part 4 - Batch Processing](../part4-batch/README.md) que utiliza el código refactorizado de esta parte.

@@ -47,17 +47,18 @@ Este proyecto se divide en **4 ejercicios progresivos**, cada uno con su propia 
 
 ---
 
-### **Part 4: Batch Processing & Design Patterns** ⚙️
-- **Carpeta:** `refactored/`
-- **Objetivo:** Implementar proceso batch para generación de facturas con patrones avanzados de diseño
+### **Part 4: Batch Processing & Scaling** ⚙️
+- **Carpeta:** `part4-batch/`
+- **Objetivo:** Implementar generación nocturna de facturas para todos los contratos (~10,000)
 - **Contenido:**
-  - 🏗️ Arquitectura en capas (Entity → Repository → Service → Controller)
-  - 🏗️ Strategy Pattern para cálculo de tarifas
-  - 🏗️ Batch command para procesar múltiples contratos
-  - 🏗️ Sistema de notificaciones por email
-  - 🏗️ Código production-ready y fully testable
+  - 🏗️ Symfony Console Command para ejecución programada
+  - 🏗️ Batch processing con chunks de 100 contratos
+  - 🏗️ Manejo robusto de errores (no detiene batch)
+  - 🏗️ Prevención de duplicados (idempotencia)
+  - 🏗️ Notificaciones por email con resumen
+  - 🏗️ Logging completo para auditoría
 
-📖 [Ver documentación de Part 4](refactored/README.md)
+📖 [Ver documentación de Part 4](part4-batch/README.md)
 
 ---
 

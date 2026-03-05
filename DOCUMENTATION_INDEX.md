@@ -41,20 +41,16 @@ Este archivo ayuda a navegar por toda la documentación del proyecto.
   - Auditoría de intentos
 - **Archivo original:** [part3-api/EXERCISE3_SOLUTION.md](part3-api/EXERCISE3_SOLUTION.md)
 
-### **Part 4: Batch Processing & Design Patterns**
-- **Carpeta:** `refactored/`
-- **Archivo principal:** [refactored/README.md](refactored/README.md)
+### **Part 4: Batch Processing & Scaling**
+- **Carpeta:** `part4-batch/`
+- **Archivo principal:** [part4-batch/README.md](part4-batch/README.md)
 - **Contenido:**
-  - Generación de facturas en batch
-  - Patrones avanzados de diseño
-  - Escalabilidad a 100,000+ contratos
+  - Generación nocturna de facturas (03:00 UTC)
+  - Procesamiento de ~10,000 contratos
+  - Manejo de errores robusto
+  - Prevención de duplicados
   - Notificaciones por email
-
-**Documentación adicional:**
-- [refactored/PART4_DESIGN_PATTERNS.md](refactored/PART4_DESIGN_PATTERNS.md) - Detalles de patrones
-- [refactored/PART4_IMPLEMENTATION.md](refactored/PART4_IMPLEMENTATION.md) - Implementación paso a paso
-- [refactored/PART4_QUICK_REFERENCE.md](refactored/PART4_QUICK_REFERENCE.md) - Referencia rápida
-- [refactored/PART4_SUMMARY.md](refactored/PART4_SUMMARY.md) - Resumen ejecutivo
+  - Preguntas de escalabilidad (100,000+ contratos)
 
 ---
 
@@ -80,7 +76,7 @@ Resumen ejecutivo de todo el proyecto con:
 2. [part1-sql/README.md](part1-sql/README.md) - SQL y BD (20 min)
 3. [part2-php/README.md](part2-php/README.md) - Code review (60 min)
 4. [part3-api/README.md](part3-api/README.md) - API integration (40 min)
-5. [refactored/README.md](refactored/README.md) - Batch processing (40 min)
+5. [part4-batch/README.md](part4-batch/README.md) - Batch processing (40 min)
 
 ### 3️⃣ **Para Implementación (5 horas)**
 1. Leer README.md de cada carpeta
@@ -90,9 +86,9 @@ Resumen ejecutivo de todo el proyecto con:
 
 ### 4️⃣ **Para Profundidad Técnica (8+ horas)**
 - Leer todos los archivos MD en orden
-- Examinar cada archivo de código
+- Examinar cada archivo de código en cada Part
 - Revisar ejemplos de test
-- Estudiar patrones de diseño en detalle
+- Entender integración entre Parts (Part 2 → Part 3 → Part 4)
 
 ---
 
@@ -132,19 +128,13 @@ FE-PruebaTecnica/
 │   ├── Repository/
 │   └── Service/
 │
-├── refactored/                       (Part 4: Batch & Design Patterns)
+├── part4-batch/                      (Part 4: Batch Processing & Scaling)
 │   ├── README.md ⭐
-│   ├── PART4_DESIGN_PATTERNS.md
-│   ├── PART4_IMPLEMENTATION.md
-│   ├── PART4_QUICK_REFERENCE.md
-│   ├── PART4_SUMMARY.md
 │   ├── Command/
-│   ├── Controller/
-│   ├── Entity/
-│   ├── Repository/
-│   ├── Service/
-│   ├── Exception/
-│   └── Tests/
+│   │   └── GenerateInvoicesCommand.php
+│   └── Service/
+│       ├── BatchInvoiceGenerator.php
+│       └── SummaryEmailer.php
 │
 ├── docs/                             (Documentación general)
 │   └── PROJECT_SUMMARY.md
@@ -166,17 +156,16 @@ FE-PruebaTecnica/
 - [part2-php/ANALYSIS_COMPLETE.md](part2-php/ANALYSIS_COMPLETE.md#-bad-error-handling) - Issues #4-5
 - [part2-php/README.md](part2-php/README.md#issue-4-echo-para-errores-líneas-24-41) - Solución
 
-### Arquitectura y Patrones
-- [refactored/README.md](refactored/README.md#-patrones-de-diseño-utilizados) - Todos los patrones
-- [refactored/PART4_DESIGN_PATTERNS.md](refactored/PART4_DESIGN_PATTERNS.md) - Análisis profundo
+### Batch Processing & Escalabilidad
+- [part4-batch/README.md](part4-batch/README.md) - Procesamiento nocturno
+- [part4-batch/README.md#-escalabilidad](part4-batch/README.md#-escalabilidad) - Escalabilidad a 100,000 contratos
 
 ### Testing
 - [part2-php/README.md](part2-php/README.md#-testing) - Unit testing
-- [refactored/README.md](refactored/README.md#-testing) - Testing batch processing
 
-### Escalabilidad
-- [refactored/README.md](refactored/README.md#-manejo-de-escala) - Parallelización y queues
-- [refactored/PART4_IMPLEMENTATION.md](refactored/PART4_IMPLEMENTATION.md) - Detalles
+### Patrones de Diseño
+- [part2-php/README.md](part2-php/README.md#patrón-strategy) - Strategy Pattern para tarifas
+- [part2-php/README.md](part2-php/README.md#patrón-factory) - Factory Pattern
 
 ### API Integration
 - [part3-api/README.md](part3-api/README.md) - Explicación completa
@@ -186,16 +175,17 @@ FE-PruebaTecnica/
 
 ## ✨ Características Documentadas
 
-- ✅ SQL Injection prevention
+- ✅ SQL Queries & Database Schema
+- ✅ SQL Injection prevention  
 - ✅ Error handling con excepciones
 - ✅ Repository pattern
 - ✅ Strategy pattern para tarifas
 - ✅ Dependency injection
-- ✅ Batch processing
-- ✅ API integration
+- ✅ API integration (ERSE)
+- ✅ Batch processing, Cron jobs
 - ✅ Email notifications
 - ✅ Logging y auditoría
-- ✅ Unit testing
+- ✅ Unit testing patterns
 - ✅ SOLID principles
 
 ---

@@ -19,6 +19,8 @@ class ContractRepository
     {
         $stmt = $this->pdo->prepare(
             "SELECT c.id, c.tariff_id, c.country, 
+                    c.nif, c.cups, c.street_address, c.city, c.postal_code,
+                    c.start_date, c.estimated_annual_kwh,
                     t.id as tariff_id, t.code, t.price_per_kwh, t.fixed_monthly
              FROM contracts c 
              JOIN tariffs t ON c.tariff_id = t.id
@@ -39,11 +41,20 @@ class ContractRepository
             (float) $row['fixed_monthly']
         );
 
+        $startDate = new \DateTimeImmutable($row['start_date']);
+
         return new Contract(
             (int) $row['id'],
             (int) $row['tariff_id'],
             $row['country'],
-            $tariff
+            $tariff,
+            $row['nif'],
+            $row['cups'],
+            $row['street_address'],
+            $row['city'],
+            $row['postal_code'],
+            $startDate,
+            (float) $row['estimated_annual_kwh']
         );
     }
 }

@@ -2,7 +2,7 @@
 
 ## 📊 Objetivo
 
-Diseñar un esquema de base de datos relacional y escribir consultas SQL eficientes para el sistema de gestión de contratos de energía de FactorEnergia.
+Escribir consultas SQL eficientes para el sistema de gestión de contratos de energía de FactorEnergia.
 
 ---
 
@@ -10,7 +10,7 @@ Diseñar un esquema de base de datos relacional y escribir consultas SQL eficien
 
 ### Archivos Principales
 - **`schema.sql`** - Esquema completo de la base de datos
-- **`01_queries.sql`** - Todas las consultas SQL requeridas
+- **`db_queries.sql`** - Todas las consultas SQL requeridas
 
 ---
 
@@ -99,12 +99,12 @@ sqlcmd -i schema.sql
 
 ### 2. Ejecutar las Consultas
 ```sql
--- Ver todas las consultas en 01_queries.sql
-source 01_queries.sql;
+-- Ver todas las consultas en db_queries.sql
+source db_queries.sql;
 ```
 
 ### 3. Ejemplos de Uso
-Cada consulta en `01_queries.sql` incluye comentarios explicativos y ejemplos de parámetros.
+Cada consulta en `db_queries.sql` incluye comentarios explicativos y ejemplos de parámetros.
 
 ---
 

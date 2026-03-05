@@ -526,13 +526,6 @@ class InvoiceServiceTest {
 
 ---
 
-## 📂 Archivos en Esta Carpeta
-
-### Documentación
-- **README.md** ← Estás aquí
-- **ANALYSIS_COMPLETE.md** - Análisis detallado de los 11 issues
-- **BEFORE_AFTER.md** - Antes vs Después lado a lado
-
 ### Código Refactorizado
 - `Entity/` - Dominio (Contract, Tariff, Invoice)
 - `Repository/` - Acceso a datos
@@ -542,18 +535,6 @@ class InvoiceServiceTest {
 - `Controller/` - HTTP endpoints
 - `Tests/` - Ejemplos de unit tests
 
----
-
-## 🚀 Cómo Usar Este Código
-
-1. **Estudiar:** Leer documentación en orden
-   - ANALYSIS_COMPLETE.md → BEFORE_AFTER.md
-   
-2. **Implementar:** Copiar código de las carpetas Entity/, Repository/, Service/
-
-3. **Testear:** Ejecutar ejemplos en Tests/
-
-4. **Extender:** Agregar nuevas tarifas sin modificar código existente
 
 ---
 

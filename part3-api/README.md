@@ -1,6 +1,6 @@
 # Part 3: API Integration - ERSE Synchronization
 
-## 🌍 Objetivo
+## 🎯 Objetivo
 
 Crear un módulo de integración que sincronice contratos de electricidad con la API de ERSE (Entidade Reguladora dos Serviços Energéticos - regulador português). FactorEnergia está expandiendo a Portugal y debe registrar automáticamente cada contrato con la autoridad reguladora.
 
@@ -121,239 +121,69 @@ class ContractSync {
 ## 🔌 Componentes Principales
 
 ### 1. **Controller** - Exposición HTTP
-```php
-// Ruta: POST /api/contracts/sync
-class ContractSyncController {
-    public function sync(Request $request): Response {
-        // Validar entrada
-        $contractId = (int) $request->get('contract_id');
-        
-        if ($contractId <= 0) {
-            return new JsonResponse(['error' => 'Invalid contract_id'], 400);
-        }
-        
-        try {
-            // Delegar a servicio
-            $result = $this->service->syncContract($contractId);
-            
-            return new JsonResponse([
-                'status' => 'success',
-                'sync_id' => $result->getId(),
-                'erse_id' => $result->getErseExternalId(),
-            ], 201);
-            
-        } catch (ContractNotFoundException $e) {
-            return new JsonResponse(['error' => 'Contract not found'], 404);
-        } catch (ValidationException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], 400);
-        } catch (Exception $e) {
-            return new JsonResponse(['error' => 'Sync failed'], 500);
-        }
-    }
-}
-```
+
+📄 Ver: [Controller/ContractSyncController.php](Controller/ContractSyncController.php)
+
+**Función:** Expone el endpoint HTTP `POST /api/contracts/sync` que:
+- Valida que `contract_id` esté presente en el request body
+- Delega la sincronización al servicio `ErseSyncService`
+- Maneja excepciones y retorna códigos HTTP apropiados:
+  - `201 Created` → sincronización exitosa
+  - `400 Bad Request` → errores de validación
+  - `404 Not Found` → contrato no existe
+  - `500 Internal Server Error` → errores inesperados
 
 ---
 
 ### 2. **Service** - Lógica de Sincronización
-```php
-class ErseSyncService {
-    public function syncContract(int $contractId): ContractSync {
-        // 1. Crear registro de auditoría inicial
-        $sync = new ContractSync();
-        $sync->setContractId($contractId);
-        $sync->setStatus('pending');
-        $this->syncRepository->save($sync);
-        
-        try {
-            // 2. Validar y cargar contrato
-            $contract = $this->contractRepository->findById($contractId);
-            
-            if (!$contract) {
-                throw new ContractNotFoundException("Contract $contractId not found");
-            }
-            
-            // 3. Validar que sea portugués
-            if ($contract->getCountry() !== 'PT') {
-                throw new ValidationException(
-                    "Contract must be from Portugal (country='PT')"
-                );
-            }
-            
-            // 4. Construir payload ERSE
-            $payload = $this->buildErsePayload($contract);
-            
-            // 5. Llamar API externa
-            $response = $this->apiClient->registerContract($payload);
-            
-            // 6. Procesar respuesta
-            $erseId = $response['contract_id'] ?? null;
-            $sync->setStatus('success');
-            $sync->setErseExternalId($erseId);
-            $sync->setErseResponse($response);
-            
-            // 7. Guardar en BD
-            $this->syncRepository->save($sync);
-            
-            $this->logger->info(
-                "Contract synced successfully",
-                ['contract_id' => $contractId, 'erse_id' => $erseId]
-            );
-            
-            return $sync;
-            
-        } catch (ValidationException | ContractNotFoundException $e) {
-            // Error esperado - registrar como fallo
-            $sync->setStatus('failed');
-            $sync->setErrorMessage($e->getMessage());
-            $this->syncRepository->save($sync);
-            
-            $this->logger->warning("Sync validation error: " . $e->getMessage());
-            throw $e;
-            
-        } catch (ExternalApiException $e) {
-            // Error de API - retry más tarde
-            $sync->setStatus('failed');
-            $sync->setErrorMessage($e->getMessage());
-            $this->syncRepository->save($sync);
-            
-            $this->logger->error("ERSE API error: " . $e->getMessage());
-            throw $e;
-        }
-    }
-    
-    private function buildErsePayload(Contract $contract): array {
-        return [
-            'nif' => $contract->getNif(),
-            'cups' => $contract->getSupplyPointCode(),
-            'customer_name' => $contract->getCustomerName(),
-            'address' => $contract->getAddress(),
-            'start_date' => $contract->getStartDate()->format('Y-m-d'),
-            'estimated_annual_kwh' => $contract->getEstimatedKwh(),
-            'tariff_code' => $contract->getTariff()->getCode(),
-        ];
-    }
-}
-```
+
+📄 Ver: [Service/ErseSyncService.php](Service/ErseSyncService.php)
+
+**Función:** Orquesta el proceso completo de sincronización:
+1. Crea un registro inicial `ContractSync` con status `pending` para auditoría
+2. Carga el contrato desde BD y valida que exista
+3. Verifica que sea un contrato portugués (`country='PT'`)
+4. Construye el payload en formato ERSE (NIF, CUPS, dirección, tarifa, etc)
+5. Llama a la API externa de ERSE
+6. Procesa la respuesta y actualiza el registro de auditoría con el resultado
+7. Maneja excepciones:
+   - `ContractNotFoundException` → registra como "failed" y relanza
+   - `ExternalApiException` → registra como "failed" para retry posterior
+8. Registra todo con logging para trazabilidad
 
 ---
 
 ### 3. **API Client** - Integración Externa
-```php
-class EnergyMarketApiClient {
-    private HttpClientInterface $client;
-    private string $erseUrl;
-    private string $erseToken;
-    
-    public function __construct(HttpClientInterface $client) {
-        $this->client = $client;
-        $this->erseUrl = $_ENV['ERSE_URL'];  // https://api.erse.pt/v1
-        $this->erseToken = $_ENV['ERSE_TOKEN'];  // Bearer token
-    }
-    
-    /**
-     * Registra un contrato en ERSE
-     * 
-     * @throws ExternalApiException
-     */
-    public function registerContract(array $payload): array {
-        try {
-            $response = $this->client->request('POST', 
-                $this->erseUrl . '/contracts/register',
-                [
-                    'headers' => [
-                        'Authorization' => 'Bearer ' . $this->erseToken,
-                        'Content-Type' => 'application/json',
-                    ],
-                    'json' => $payload,
-                    'timeout' => 10,  // Timeout para evitar bloqueos
-                ]
-            );
-            
-            $statusCode = $response->getStatusCode();
-            $content = $response->toArray();
-            
-            // Manejar diferentes códigos HTTP
-            if ($statusCode === 201) {
-                // ✅ Éxito
-                return $content;
-                
-            } elseif ($statusCode === 400) {
-                // ❌ Validación falló
-                throw new ValidationException(
-                    "ERSE validation failed: " . $content['message'] ?? unknokn
-                );
-                
-            } elseif ($statusCode === 409) {
-                // ❌ Contrato duplicado
-                throw new DuplicateContractException(
-                    "Contract already registered with ERSE"
-                );
-                
-            } else {
-                // ❌ Error desconocido
-                throw new ExternalApiException(
-                    "ERSE API error: " . $statusCode
-                );
-            }
-            
-        } catch (TransportExceptionInterface $e) {
-            // ❌ Error de red
-            throw new ExternalApiException(
-                "Network error calling ERSE: " . $e->getMessage(),
-                previous: $e
-            );
-        }
-    }
-}
-```
+
+📄 Ver: [Service/ErseSyncService.php](Service/ErseSyncService.php) (método `syncContract`)
+
+**Función:** Realiza los siguientes pasos de la integración con ERSE:
+- Autentica las requests con Bearer token (de variables de entorno)
+- Construye y envía el payload JSON a `POST {ERSE_URL}/contracts` con timeout de 10 segundos
+- Maneja diferentes códigos de respuesta HTTP:
+  - `201 Created` → Éxito, extrae ID externo de ERSE
+  - `400 Bad Request` → Error de validación de datos
+  - `409 Conflict` → Contrato ya registrado (duplicado)
+  - Otros → Errores desconocidos
+- Captura excepciones de transporte (errores de red) y las mapea a excepciones custom
+- Registra toda la respuesta (success/error) para auditoría en la BD
 
 ---
 
 ### 4. **Repository** - Auditoría
-```php
-class ContractSyncRepository {
-    public function save(ContractSync $sync): void {
-        $sql = <<<SQL
-            INSERT INTO contract_sync 
-                (contract_id, status, erse_external_id, erse_response, error_message, created_at)
-            VALUES (?, ?, ?, ?, ?, NOW())
-            ON DUPLICATE KEY UPDATE
-                status = ?, 
-                erse_external_id = ?,
-                erse_response = ?,
-                error_message = ?,
-                updated_at = NOW()
-        SQL;
-        
-        $stmt = $this->connection->prepare($sql);
-        $stmt->execute([
-            $sync->getContractId(),
-            $sync->getStatus(),
-            $sync->getErseExternalId(),
-            json_encode($sync->getErseResponse()),
-            $sync->getErrorMessage(),
-            // Valores para UPDATE
-            $sync->getStatus(),
-            $sync->getErseExternalId(),
-            json_encode($sync->getErseResponse()),
-            $sync->getErrorMessage(),
-        ]);
-    }
-    
-    public function findPendingByContractId(int $contractId): ?ContractSync {
-        $sql = "SELECT * FROM contract_sync 
-                WHERE contract_id = ? AND status = 'pending'
-                ORDER BY created_at DESC LIMIT 1";
-        
-        $stmt = $this->connection->prepare($sql);
-        $stmt->execute([$contractId]);
-        
-        $row = $stmt->fetch();
-        return $row ? $this->mapToEntity($row) : null;
-    }
-}
-```
+
+📄 Ver: [Repository/ContractSyncRepository.php](Repository/ContractSyncRepository.php)
+
+**Función:** Persiste en la BD los registros de auditoría de cada intento de sincronización:
+- Guarda/actualiza registros `ContractSync` con:
+  - ID del contrato sincronizado
+  - Status (pending/success/failed)
+  - ID externo asignado por ERSE (si fue exitoso)
+  - Response JSON completa de ERSE (para debugging)
+  - Mensaje de error (si falló)
+  - Timestamps de creación/actualización
+- Usa `INSERT ... ON DUPLICATE KEY UPDATE` para evitar duplicados
+- Proporciona método para buscar sincronizaciones pendientes por contrato
 
 ---
 
@@ -363,105 +193,51 @@ class ContractSyncRepository {
 **Escenario:** Se intenta sincronizar un contrato ya registrado en ERSE
 
 **Solución:**
-```php
-// BD tiene constraint UNIQUE (contract_id, status='pending')
-// Esto previene que se creen múltiples "pending" para el mismo contrato
-
-// En API, si retorna 409 Conflict:
-catch (DuplicateContractException $e) {
-    $sync->setStatus('failed');
-    $sync->setErrorMessage('Already registered with ERSE');
-    // No intentar retry automático
-}
-```
+- La BD tiene un constraint `UNIQUE (contract_id, status='pending')` que previene múltiples sincronizaciones pendientes del mismo contrato
+- Si ERSE retorna `409 Conflict`, significa que el contrato ya está registrado
+- El servicio captura la excepción `DuplicateContractException`, marca el registro como `failed`, y NO intenta retry automático
+- Se registra el error en el campo `error_message` para auditoría
 
 ---
 
 ### Caso 2: Outage de ERSE
-**Escenario:** API de ERSE no disponible
+**Escenario:** La API de ERSE no disponible o timeout
 
-**Solución con Background Job:**
-```php
-// En controller
-try {
-    $sync = $this->service->syncContract($contractId);
-} catch (ExternalApiException $e) {
-    // API no disponible - queue para retry posterior
-    $this->queue->publish(new SyncContractMessage($contractId));
-    return new JsonResponse(['status' => 'queued'], 202);
-}
-
-// Background worker (ejecuta cada 5 minutos)
-class RetryFailedSyncsCommand extends Command {
-    public function execute(): int {
-        $pendingSyncs = $this->syncRepository->findAllPending();
-        
-        foreach ($pendingSyncs as $sync) {
-            try {
-                $this->service->retrySync($sync->getContractId());
-            } catch (Exception $e) {
-                $this->logger->error("Retry failed: " . $e->getMessage());
-            }
-        }
-        
-        return 0;
-    }
-}
-```
+**Solución:**
+- Si ocurre un `TransportException` (error de red), el servicio captura la excepción
+- Marca el registro como `failed` y guarda el mensaje de error
+- En el Controller, se puede envolver en un try-catch para retornar `HTTP 202 Accepted` (status queued)
+- Un comando de background job (ejecutado cada 5 minutos) puede leer registros con status `failed` y reintentar la sincronización de forma asincrónica
 
 ---
 
-### Caso 3: Validación de Contrato Portuguesa
-**Escenario:** Intentan sincronizar contrato de España
+### Caso 3: Validación de Contrato Portugués
+**Escenario:** Intento de sincronizar contrato de otro país (ej: España)
 
 **Solución:**
-```php
-if ($contract->getCountry() !== 'PT') {
-    throw new ValidationException(
-        "Only Portuguese contracts can be synced to ERSE. " .
-        "This contract is from: " . $contract->getCountry()
-    );
-}
-```
-
-Retorna HTTP 400 (Bad Request) - no es error del sistema, es validación.
+- El servicio valida que `contract->getCountry() === 'PT'`
+- Si el país no es Portugal, lanza una excepción `ValidationException`
+- Marca el registro como `failed` con mensaje "Only Portuguese contracts can be synced to ERSE"
+- El Controller retorna `HTTP 400 Bad Request` - no es error del sistema, es validación legítima
 
 ---
 
 ## 🧪 Testing
 
 ### Unit Test - Service
-```php
-class ErseSyncServiceTest extends TestCase {
-    public function testSyncPortugueseContract(): void {
-        // Arrange
-        $contract = new Contract(['country' => 'PT', 'nif' => '123456789']);
-        $contractRepo = new FakeContractRepository();
-        $contractRepo->add($contract);
-        
-        $apiClient = new FakeErseSyncApiClient();
-        $apiClient->setResponse(['contract_id' => 'ERSE-001']);
-        
-        $service = new ErseSyncService($contractRepo, $apiClient, ...);
-        
-        // Act
-        $sync = $service->syncContract($contract->getId());
-        
-        // Assert
-        $this->assertEquals('success', $sync->getStatus());
-        $this->assertEquals('ERSE-001', $sync->getErseExternalId());
-    }
-    
-    public function testFailsForNonPortugueseContract(): void {
-        // Arrange
-        $contract = new Contract(['country' => 'ES']);  // España, no Portugal
-        
-        // Act & Assert
-        $this->expectException(ValidationException::class);
-        $service->syncContract($contract->getId());
-    }
-}
-```
+
+📄 Ver: [Tests/](Tests/) (si existen tests en esta carpeta)
+
+**Estrategia de Testing:**
+- **Mocks de dependencias externas:** Usar fakes para `ContractRepository` y cliente HTTP a ERSE
+- **Casos a validar:**
+  - ✅ Sincronización exitosa de contrato portugués
+  - ❌ Fallo cuando el contrato no existe
+  - ❌ Fallo cuando el contrato NO es portugués (country ≠ 'PT')
+  - ❌ Fallo cuando ERSE retorna 409 (duplicado)
+  - ❌ Manejo de errores de red (TransportException)
+- **Assertions:** Verificar que el status del registro `ContractSync` sea el correcto (success/failed), que se haya guardado en BD, y que el error message esté presente si falló
+- **Logging:** Validar que se registren correctamente los intentos para auditoría
 
 ---
 
@@ -488,22 +264,28 @@ part3-api/
 ## 🔧 Configuración
 
 ### Variables de Entorno
+
+Debes definir estas variables en tu archivo `.env` o `.env.production` para que [Service/ErseSyncService.php](Service/ErseSyncService.php) pueda conectar con la API de ERSE:
+
 ```bash
-# .env.production
+# URL base de la API de ERSE
 ERSE_URL=https://api.erse.pt/v1
+
+# Token de autenticación Bearer OAuth
 ERSE_TOKEN=Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+
+# Timeout máximo para requests a ERSE (en segundos)
 ERSE_TIMEOUT=10
 ```
 
-### Parámetros Symfony
-```yaml
-# services.yaml
-services:
-  App\Service\EnergyMarketApiClient:
-    arguments:
-      $erseUrl: '%env(ERSE_URL)%'
-      $erseToken: '%env(ERSE_TOKEN)%'
-```
+**Importante:**
+- ⚠️ Nunca commits estos valores en el repositorio
+- ⚠️ Las credenciales NUNCA deben estar hardcodeadas en el código
+- ⚠️ Usa gestión de secretos (GitHub Secrets, AWS Secrets Manager, etc) en production
+
+### Inyección de Dependencias
+
+El servicio [Service/ErseSyncService.php](Service/ErseSyncService.php) recibe estos valores mediante inyección de dependencias en Symfony. Los repositorios y el cliente HTTP también son inyectados automáticamente por el contenedor de servicios de Symfony.
 
 ---
 
@@ -551,22 +333,54 @@ services:
 
 ## 🚀 Cómo Usar
 
-1. **Sincronizar contrato:**
-   ```bash
-   curl -X POST http://localhost:8000/api/contracts/sync \
-        -H "Content-Type: application/json" \
-        -d '{"contract_id": 123}'
-   ```
+### 1. **Sincronizar un contrato**
 
-2. **Ver estado de sincronización:**
-   ```sql
-   SELECT * FROM contract_sync WHERE contract_id = 123;
-   ```
+Envía una solicitud POST al endpoint que expone [Controller/ContractSyncController.php](Controller/ContractSyncController.php):
 
-3. **Retry de sincronizaciones fallidas:**
-   ```bash
-   symfony console app:retry-failed-syncs
-   ```
+```bash
+curl -X POST http://localhost:8000/api/contracts/sync \
+     -H "Content-Type: application/json" \
+     -d '{"contract_id": 123}'
+```
+
+**Respuestas esperadas:**
+- `201 Created` - Sincronización exitosa, incluye `erse_id`
+- `400 Bad Request` - Validación falló (contrato no es portugués, no existe campos requeridos)
+- `404 Not Found` - El contrato no existe en la BD
+- `500 Internal Server Error` - Error inesperado en el servidor
+
+---
+
+### 2. **Verificar estado de sincronización**
+
+Consulta la tabla de auditoría que gestiona [Repository/ContractSyncRepository.php](Repository/ContractSyncRepository.php):
+
+```sql
+SELECT id, contract_id, status, erse_external_id, error_message, created_at 
+FROM contract_sync 
+WHERE contract_id = 123
+ORDER BY created_at DESC;
+```
+
+Campos importantes:
+- `status`: `pending` | `success` | `failed`
+- `erse_external_id`: ID asignado por ERSE (solo si status='success')
+- `error_message`: Descripción del error (solo si status='failed')
+
+---
+
+### 3. **Retry de sincronizaciones fallidas**
+
+Los registros con `status='failed'` pueden reintenarse con un comando de background job:
+
+```bash
+symfony console app:retry-failed-syncs
+```
+
+Este comando (si se configura en el proyecto):
+- Busca todos los registros `failed` en la tabla `contract_sync`
+- Reintenta sincronizar cada uno hasta un máximo de reintentos
+- Actualiza el estado según el resultado del reintento
 
 ---
 

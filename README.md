@@ -12,7 +12,7 @@ Este proyecto se divide en **4 ejercicios progresivos**, cada uno con su propia 
 - **Carpeta:** `part1-sql/`
 - **Objetivo:** Diseñar esquema de base datos y consultas SQL para gestión de contratos y tarifas
 - **Contenido:**
-  - `01_queries.sql` - Todas las consultas SQL requeridas
+  - `db_queries.sql` - Todas las consultas SQL requeridas
   - `schema.sql` - Esquema de base de datos
   - `README.md` - Documentación detallada
 
@@ -91,13 +91,11 @@ FE-PruebaTecnica/
 │
 ├── part1-sql/                  (Part 1: SQL)
 │   ├── README.md              
-│   ├── 01_queries.sql
+│   ├── db_queries.sql
 │   └── schema.sql
 │
 ├── part2-php/                  (Part 2: Code Review & Refactoring)
 │   ├── README.md
-│   ├── ANALYSIS_COMPLETE.md   (Análisis detallado)
-│   ├── BEFORE_AFTER.md        (Comparación código)
 │   ├── Controller/
 │   ├── Entity/
 │   ├── Repository/

@@ -314,17 +314,6 @@ if ($this->invoiceRepository->existsForPeriod($contractId, $billingPeriod)) {
 | **Duplicados** | Verificación en DB | Garantiza idempotencia |
 | **Logger** | PSR-3 Logging | Auditoría + debugging |
 | **Email** | HTML con tabla | Resumen ejecutivo legible |
-| **Independencia** | No acoplado a Part 2 | Reutiliza services |
 
 ---
-
-## 🔄 Relacionado Con
-
-- **Part 2:** Usa `InvoiceService`, `TariffCalculators`, `Repositories`, `Exceptions`
-- **Part 3:** No depende (ERSE es para sincronización manual)
-- **Database:** Consulta `contracts`, `meter_readings`, escribe en `invoices`
-
----
-
-**Siguiente:** Integra con [Part 2 - Code Review & Refactoring](../part2-php/README.md)
 

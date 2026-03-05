@@ -62,14 +62,6 @@ Este proyecto se divide en **4 ejercicios progresivos**, cada uno con su propia 
 
 ---
 
-## 📚 Índice de Documentación
-
-Para una navegación completa por toda la documentación del proyecto, consulta **[DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md)** que contiene:
-- Búsqueda por tema
-- Flujos de lectura recomendados
-- Referencias cruzadas
-- Estructura completa
-
 ---
 
 ## 🎯 Flujo de Lectura Recomendado
@@ -104,15 +96,14 @@ FE-PruebaTecnica/
 │
 ├── part2-php/                  (Part 2: Code Review & Refactoring)
 │   ├── README.md
-│   ├── ANALYSIS.md            (Análisis completo)
-│   ├── SOLUTIONS.md           (Soluciones detalladas)
+│   ├── ANALYSIS_COMPLETE.md   (Análisis detallado)
+│   ├── BEFORE_AFTER.md        (Comparación código)
 │   ├── Controller/
 │   ├── Entity/
 │   ├── Repository/
 │   ├── Service/
 │   ├── Exception/
-│   ├── Tests/
-│   └── COMPARISON.md          (Antes vs Después)
+│   └── Tests/
 │
 ├── part3-api/                  (Part 3: API Integration)
 │   ├── README.md
@@ -126,7 +117,6 @@ FE-PruebaTecnica/
 │   ├── Command/
 │   └── Service/
 │
-├── DOCUMENTATION_INDEX.md      (Navegación centralizada)
 └── docs/                       (Documentación histórica)
 ```
 

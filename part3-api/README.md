@@ -470,7 +470,6 @@ class ErseSyncServiceTest extends TestCase {
 ```
 part3-api/
 ├── README.md                          ← Estás aquí
-├── EXERCISE3_SOLUTION.md             (Documento original)
 ├── Controller/
 │   └── ContractSyncController.php    (HTTP endpoint)
 ├── Entity/
@@ -584,7 +583,3 @@ R: En variables de entorno (`.env.production`), nunca hardcoded en código.
 
 **P: ¿Se puede sincronizar el mismo contrato dos veces?**
 R: Solo una vez. El constraint UNIQUE en BD lo previene.
-
----
-
-**Siguiente:** Continúa con [Part 4 - Batch Processing & Scaling](../part4-batch/README.md)

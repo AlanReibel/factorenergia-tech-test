@@ -117,28 +117,8 @@ Cada consulta en `01_queries.sql` incluye comentarios explicativos y ejemplos de
 
 ---
 
-## 🔗 Relación con Otros Ejercicios
-
-**Part 2 (Code Review)** utiliza el esquema SQL en:
-- Repositorios para cargar contratos y tarifas
-- Cálculo de facturas basado en estos datos
-
-**Part 3 (API)** usa esta estructura para:
-- Sincronizar contratos con reguladores externos
-- Consultar datos de Auditoría
-
-**Part 4 (Batch)** ejecuta procesos batch sobre:
-- Lecturas de contador
-- Generación de facturas masivas
-
----
-
-## 📞 Notas Adicionales
+##  Notas Adicionales
 
 - Las consultas son **agnósticas de BD**: funcionan en MySQL, SQL Server y PostgreSQL con pequeños ajustes
 - Se proporcionan ejemplos de datos de prueba para validar el esquema
 - Cada tabla tiene una columna de timestamp para auditoría
-
----
-
-**Siguiente:** Continúa con [Part 2 - Code Review & Refactoring](../part2-php/README.md)
